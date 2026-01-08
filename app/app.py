@@ -15,8 +15,11 @@ DATA_STORE: Dict[int, str] = {
 
 @app.get("/health")
 def health():
-    return {"status": "ok"}
-
+    return {
+        "status": "ok",
+        "environment": APP_ENV
+    }
+    
 @app.get("/data/{item_id}")
 def get_data(item_id: int):
     # Simulate processing latency
@@ -40,9 +43,4 @@ def root():
     }
 
 
-@app.get("/health")
-def health():
-    return {
-        "status": "ok",
-        "environment": APP_ENV
-    }
+
