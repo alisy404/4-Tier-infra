@@ -29,3 +29,12 @@ def get_data(item_id: int):
         "value": value,
         "source": "memory"
     }
+
+from config import APP_ENV
+
+@app.get("/health")
+def health():
+    return {
+        "status": "ok",
+        "environment": APP_ENV
+    }
