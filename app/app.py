@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from time import sleep
 from typing import Dict
+from config import APP_ENV
+
 
 app = FastAPI(title="Tier-1 Baseline Service")
 
@@ -30,7 +32,13 @@ def get_data(item_id: int):
         "source": "memory"
     }
 
-from config import APP_ENV
+@app.get("/")
+def root():
+    return {
+        "message": "Tier-1 service running",
+        "available_endpoints": ["/health", "/data/{id}"]
+    }
+
 
 @app.get("/health")
 def health():
