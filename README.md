@@ -1,4 +1,4 @@
-🚀 Multi-Tier Cloud-Ready Application (DevOps Project)
+### Multi-Tier Cloud-Ready Application (DevOps Project)
 
 This repository demonstrates the step-by-step evolution of a backend service from a simple single-tier application to a cloud-ready, multi-tier architecture, following real-world DevOps and production practices.
 

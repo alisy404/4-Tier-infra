@@ -3,9 +3,16 @@ from fastapi import FastAPI
 from time import sleep
 from config import APP_ENV, DB_HOST, DB_NAME, DB_USER, DB_PASSWORD
 import time
+import redis
 
 app = FastAPI(title="Tier-2 Database Service")
 
+
+from config import (
+    APP_ENV,
+    DB_HOST, DB_NAME, DB_USER, DB_PASSWORD,
+    REDIS_HOST, REDIS_PORT
+)
 
 # -------------------------
 # Database Connection
@@ -71,7 +78,23 @@ def health():
 @app.get("/data/{item_id}")
 def get_data(item_id: int):
     sleep(0.1)
+    cache_key = f"item:{item_id}"
 
+    r = get_redis_client()
+    if r:
+        try:
+            cached = r.get(cache_key)
+            if cached:
+                return {
+                    "id": item_id,
+                    "value": cached,
+                    "source": "redis"
+                }
+        except Exception as e:
+            print("Redis read failed:", e)
+
+
+    # Cache miss → DB
     conn = get_db_connection()
     cur = conn.cursor()
 
@@ -84,4 +107,33 @@ def get_data(item_id: int):
     if not row:
         return {"error": "item not found"}
 
-    return {"id": item_id, "value": row[0], "source": "database"}
+    value = row[0]
+
+    # Write to cache (TTL = 60s)
+    if r:
+        try:
+            r.setex(cache_key, 60, value)
+        except Exception as e:
+            print("Redis write failed:", e)
+
+    return {
+        "id": item_id,
+        "value": value,
+        "source": "database"
+    }
+
+
+def get_redis_client():
+    try:
+        r = redis.Redis(
+            host=REDIS_HOST,
+            port=REDIS_PORT,
+            decode_responses=True,
+            socket_connect_timeout=1,
+            socket_timeout=1
+        )
+        r.ping()  # 🔥 THIS is the key
+        return r
+    except Exception as e:
+        print("Redis unavailable:", e)
+        return None

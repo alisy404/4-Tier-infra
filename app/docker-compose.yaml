@@ -12,9 +12,11 @@ services:
       DB_NAME: appdb
       DB_USER: appuser
       DB_PASSWORD: apppass
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
     depends_on:
       - db
-
+      - redis
   db:
     image: postgres:15
     container_name: tier2-db
@@ -22,5 +24,12 @@ services:
       POSTGRES_DB: appdb
       POSTGRES_USER: appuser
       POSTGRES_PASSWORD: apppass
+    # ports:
+    #   - "5432:5432"
+
+
+  redis:
+    image: redis:7-alpine
+    container_name: tier-redis
     ports:
-      - "5432:5432"
+      - "6379:6379"
