@@ -1,14 +1,14 @@
 resource "aws_lb_target_group" "this" {
   name        = "${var.project_name}-tg"
-  port        = 8000
+  port        = 80
   protocol    = "HTTP"
   vpc_id      = var.vpc_id
   target_type = "ip"
 
   health_check {
-    path                = "/health"
+    path                = "/"
     protocol            = "HTTP"
-    port                = "8000"
+    port                = "traffic-port"
     healthy_threshold   = 2
     unhealthy_threshold = 2
     timeout             = 5
@@ -20,6 +20,7 @@ resource "aws_lb_target_group" "this" {
     Name = "${var.project_name}-tg"
   }
 }
+
 
 resource "aws_lb_listener" "http" {
   load_balancer_arn = aws_lb.this.arn

@@ -24,5 +24,5 @@ variable "container_image" {
 
 variable "container_port" {
   type    = number
-  default = 8000
+  default = 80
 }
