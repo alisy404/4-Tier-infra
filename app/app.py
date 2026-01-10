@@ -67,12 +67,12 @@ def init_db():
 # -------------------------
 @app.get("/")
 def root():
-    return {"message": "Tier-2 service running", "endpoints": ["/health", "/data/{id}"]}
+    return {"message": "FastAPI running on ECS", "endpoints": ["/health", "/data/{id}"]}
 
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "environment": APP_ENV}
+    return {"status": "OK", "environment": APP_ENV}
 
 
 @app.get("/data/{item_id}")

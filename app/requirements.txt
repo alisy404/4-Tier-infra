@@ -3,4 +3,4 @@ uvicorn
 psycopg2-binary
 # psycopg2
 redis
-
+uvicorn[standard]
