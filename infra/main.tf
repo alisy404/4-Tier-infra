@@ -29,3 +29,8 @@ module "ecs" {
   # TEMP image (replace with your app image)
   container_image = "public.ecr.aws/nginx/nginx:latest"
 }
+
+module "ecr" {
+  source       = "./ecr"
+  project_name = var.project_name
+}
