@@ -1,18 +1,18 @@
+import os
+import time
 import psycopg2
+import redis
 from fastapi import FastAPI
 from time import sleep
-from config import APP_ENV, DB_HOST, DB_NAME, DB_USER, DB_PASSWORD
-import time
-import redis
-
-app = FastAPI(title="Tier-2 Database Service")
-
-
 from config import (
-    APP_ENV,
     DB_HOST, DB_NAME, DB_USER, DB_PASSWORD,
     REDIS_HOST, REDIS_PORT
 )
+
+APP_ENV = os.getenv("APP_ENV", "local")
+
+app = FastAPI(title="Tier-2 Database Service")
+
 
 # -------------------------
 # Database Connection
@@ -26,36 +26,37 @@ def get_db_connection(retries=10, delay=5):
                 user=DB_USER,
                 password=DB_PASSWORD
             )
-        except psycopg2.OperationalError as e:
+        except psycopg2.OperationalError:
             print(f"DB not ready (attempt {attempt+1}/{retries}), retrying...")
             time.sleep(delay)
     raise Exception("Database not available after retries")
 
 
 # -------------------------
-# Startup: Init DB
+# Startup
 # -------------------------
 @app.on_event("startup")
-def init_db():
+def startup():
+    if APP_ENV == "local":
+        print("Local mode: skipping DB init")
+        return
+
+    print("Initializing database...")
     conn = get_db_connection()
     cur = conn.cursor()
 
-    cur.execute(
-        """
+    cur.execute("""
         CREATE TABLE IF NOT EXISTS items (
             id SERIAL PRIMARY KEY,
             value TEXT NOT NULL
         )
-    """
-    )
+    """)
 
-    cur.execute(
-        """
+    cur.execute("""
         INSERT INTO items (value)
         SELECT * FROM (VALUES ('alpha'), ('beta'), ('gamma')) AS v(value)
         WHERE NOT EXISTS (SELECT 1 FROM items)
-    """
-    )
+    """)
 
     conn.commit()
     cur.close()

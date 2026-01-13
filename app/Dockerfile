@@ -8,6 +8,9 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Set environment variable for application environment
+ENV APP_ENV=local
+
 # 4️⃣ Copy application code
 COPY app.py config.py ./
 
