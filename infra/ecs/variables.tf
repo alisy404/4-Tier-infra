@@ -26,3 +26,8 @@ variable "container_port" {
   type    = number
   default = 80
 }
+
+variable "ecr_repo_url" {
+  description = "ECR repository URL for FastAPI image"
+  type        = string
+}

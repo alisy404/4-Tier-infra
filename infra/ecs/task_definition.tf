@@ -9,16 +9,26 @@ resource "aws_ecs_task_definition" "this" {
   container_definitions = jsonencode([
     {
       name  = "app"
-      image = var.container_image
+      image = "${var.ecr_repo_url}:latest"
 
       portMappings = [
         {
-          containerPort = var.container_port
+          containerPort = 80
+          hostPort      = 80
           protocol      = "tcp"
         }
       ]
 
       essential = true
+
+      logConfiguration = {
+        logDriver = "awslogs"
+        options = {
+          awslogs-group         = "/ecs/multi-aws"
+          awslogs-region        = "us-east-1"
+          awslogs-stream-prefix = "fastapi"
+        }
+      }
     }
   ])
 }
