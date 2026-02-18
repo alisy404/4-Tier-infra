@@ -5,7 +5,7 @@ resource "aws_ecs_task_definition" "this" {
   cpu                      = "256"
   memory                   = "512"
   execution_role_arn       = aws_iam_role.ecs_execution_role.arn
-  depends_on = [aws_cloudwatch_log_group.ecs]
+  depends_on               = [aws_cloudwatch_log_group.ecs]
 
 
   container_definitions = jsonencode([
@@ -25,14 +25,14 @@ resource "aws_ecs_task_definition" "this" {
         { name = "APP_ENV", value = "aws" },
 
         # DB (even if RDS not live yet, values must exist)
-        { name = "DB_HOST", value = "dummy" },
-        { name = "DB_NAME", value = "dummy" },
-        { name = "DB_USER", value = "dummy" },
-        { name = "DB_PASSWORD", value = "dummy" },
+        { name = "DB_HOST", value = "${var.db_host}" },
+        { name = "DB_NAME", value = "${var.db_name}" },
+        { name = "DB_USER", value = "${var.db_user}" },
+        { name = "DB_PASSWORD", value = "${var.db_password}" },
 
         # Redis
-        { name = "REDIS_HOST", value = "dummy" },
-        { name = "REDIS_PORT", value = "6379" }
+        { name = "REDIS_HOST", value = "${var.redis_host}" },
+        { name = "REDIS_PORT", value = "${var.redis_port}" }
       ]
 
       logConfiguration = {
