@@ -11,9 +11,10 @@
 
 # Current Infrastructure Tier:
 
-+ 3-Tier Architecture
++ 4-Tier Architecture
   +  Presentation Tier → Application Load Balancer (ALB)
   +  Application Tier → ECS Fargate (FastAPI containers)
+  +  Data Tier → RDS (PostgreSQL) + ElastiCache (Redis)
   +  Infrastructure Tier → VPC, subnets, routing, security
 
 --------------------------------------------------------------------------------------------------------------------
@@ -26,8 +27,10 @@
 4. FastAPI runs inside Docker containers
 5. Containers are pulled from Amazon ECR
 6. ECS tasks run inside private subnets
-7. NAT Gateway allows outbound internet access
-8. VPC provides complete network isolation
+7. Application checks Redis (ElastiCache) for cached data first
+8. On cache miss, application queries PostgreSQL (RDS) and caches the result
+9. NAT Gateway allows outbound internet access
+10. VPC provides complete network isolation
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -41,9 +44,11 @@
 6.  Target Groups and Health Checks
 7.  Amazon ECS (Fargate)
 8.  Amazon ECR
-9.  IAM Roles and Policies
-10. CloudWatch Logs
-11. Security Groups
+9.  Amazon RDS (PostgreSQL)
+10. Amazon ElastiCache (Redis)
+11. IAM Roles and Policies
+12. CloudWatch Logs
+13. Security Groups
 
 ---------------------------------------------------------------------------------------------------------------------------------------
 
@@ -61,6 +66,8 @@
 + **Security Design**
   + ALB Security Group allows inbound HTTP traffic on port 80 from the internet
   + ECS Security Group allows inbound traffic only from ALB security group
+  + RDS Security Group allows inbound traffic only from ECS security group on port 5432
+  + Redis Security Group allows inbound traffic only from ECS security group on port 6379
   + No direct internet access to ECS tasks
   + IAM execution role scoped only for ECS and CloudWatch logs
 
@@ -70,6 +77,13 @@
   + Health check endpoint exposed at /health
   + Docker image stored in Amazon ECR
   + ECS task definition references ECR image
+
++ **Data Design**
+  + RDS PostgreSQL (db.t3.micro) as primary database
+  + ElastiCache Redis (cache.t3.micro) as caching layer
+  + Redis-first lookup with database fallback on cache miss
+  + Cached responses expire after 60 seconds (TTL)
+  + Both services deployed in private subnets only
 
 + **Load Balancer Configuration**
   + Application Load Balancer (internet-facing)
@@ -92,8 +106,11 @@
 1. Client sends HTTP request to ALB DNS
 2. ALB listener receives request on port 80
 3. Request forwarded to healthy ECS task
-4. FastAPI processes the request
-5. Response returned back to client via ALB
+4. FastAPI checks Redis cache for requested data
+5. On cache hit → returns cached response immediately
+6. On cache miss → queries PostgreSQL (RDS) for data
+7. Result is cached in Redis with 60s TTL
+8. Response returned back to client via ALB
 
 ---------------------------------------------------------------------------------------------------------------------------------------
 
@@ -149,10 +166,12 @@ Access application using ALB DNS from Terraform output.
 
 ## Project Outcomes
 
-+ Fully working FastAPI application on AWS
++ Fully working 4-Tier FastAPI application on AWS
 + High availability using multi-AZ subnets
 + Secure container deployment using ECS Fargate
 + Proper ALB health checks and traffic routing
++ Database persistence with PostgreSQL (RDS)
++ Redis caching layer for improved performance
 + Production-style networking and security
 + Resume-ready DevOps project
 
